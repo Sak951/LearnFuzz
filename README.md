@@ -1,4 +1,4 @@
-# 🛡️ Learn Fuzz // LLM Red Team & Adversarial Boundary Fuzzer
+# 🛡️ LearnFuzz // Autonomous LLM Red Teaming & Adversarial Boundary Fuzzer
 
 <div align="center">
 
@@ -14,49 +14,70 @@
   <b>An autonomous, recursive adversarial fuzzing engine and terminal-first Red Team Agent designed to probe Large Language Models, discover their cognitive breaking points, and generate executive security audits.</b>
 </p>
 
-[Key Features](#-key-features) •
-[Fuzzing Mechanics](#-how-it-works--fuzzing-algorithm) •
-[Terminal Red Team Agent](#-red-team-cli-agent) •
-[Web Dashboard](#-web-dashboard--visualization) •
+[Why LearnFuzz](#-why-learnfuzz--the-problem-with-static-benchmarks) •
+[How It Works](#-how-it-works--fuzzing-mechanics) •
+[Evidence & Case Studies](#-real-world-case-studies--discovered-breaking-points) •
+[Judge Calibration](#-evaluator-rigor--judge-calibration) •
+[Comparison Matrix](#-ecosystem-comparison) •
+[CLI Cockpit](#-red-team-cli-agent) •
 [Quickstart](#-quickstart-guide) •
-[API Reference](#-rest-api-reference)
+[REST API](#-rest-api-reference)
 
 </div>
 
 ---
 
-## 📌 Why Learn Fuzz?
+## 📌 Why LearnFuzz? // The Problem with Static Benchmarks
 
-Traditional LLM evaluation relies on **static benchmarks** (e.g., MMLU, GSM8k, HumanEval). These benchmarks have critical limitations:
-1. **Benchmark Data Leakage:** Models often memorize static questions during pre-training.
-2. **Rigidity:** Static benchmarks test single-shot answers rather than exploring the **boundaries** of reasoning.
-3. **Missing the "Breaking Point":** They tell you *if* a model failed a specific question, but not *why* or at *what exact level of complexity* the model’s reasoning collapsed.
+Traditional LLM evaluation relies heavily on **static benchmarks** (MMLU, GSM8k, HumanEval). In production, these fall short for three core reasons:
 
-**Learn Fuzz solves this with dynamic, agentic prompt mutation.** Starting from a seed prompt, it executes an autonomous evaluation loop:
-* **When the model succeeds ($\ge 8/10$):** It systematically amplifies difficulty using adversarial strategies (injected red herrings, strict negative constraints, multi-step logical chaining).
-* **When the model fails ($< 8/10$):** It automatically decomposes and simplifies the prompt to locate the exact threshold of comprehension.
-* **When a failure boundary is reached:** It computes the semantic delta between the passing parent and failing child prompt, extracting a clear, actionable **Cognitive Breaking Point Summary**.
+```
+Static Evaluation:      [ Question ] ───────────► [ Model Answer ] ───► Pass (85%) / Fail (15%)
+                                                        │
+                                                        └─► ❌ Missing: WHY it broke, WHEN it broke,
+                                                            and what minimal complexity triggered collapse.
+
+LearnFuzz Fuzzing:      [ Seed Prompt ] ──► [ Model ] ──► [ Judge (T=0) ]
+                              │
+                    ┌─────────┴─────────┐
+                    ▼                   ▼
+           Score ≥ 8 (Pass)      Score < 8 (Fail)
+                    ▼                   ▼
+          Adversarial Mutation    Drill-Down Simplification
+         (Distractors/Chains)    (Isolate Core Failure)
+                    │                   │
+                    └─────────┬─────────┘
+                              ▼
+            🚨 [ Cognitive Breaking Point Flagged ]
+               + Semantic Delta Diff (Parent vs Child)
+```
+
+1. **Benchmark Memorization & Data Contamination:** Modern frontier and open-weight models have frequently seen static benchmark test splits during pre-training.
+2. **Binary Pass/Fail Without Boundary Discovery:** Knowing a model scores 74% on GSM8k doesn't tell a security engineer *where* the reasoning logic collapsed.
+3. **No Adaptive Adversarial Pressure:** Production attackers don't ask single-turn questions — they inject distractor constraints, deceptive context, and nested logic.
+
+**LearnFuzz solves this with adaptive, recursive Tree-of-Thought mutation.** It systematically escalates prompt complexity until the model's reasoning collapses, then isolates the exact semantic threshold (the **Cognitive Breaking Point**).
 
 ---
 
 ## 🚀 Key Features
 
-* 💻 **Interactive Terminal Red Team Agent:** A rich CLI console with live tree rendering, color-coded score badges (`PASS`, `WARN`, `FAIL`), interactive node inspection, and unified prompt diffs.
-* 🦙 **100% Free Local Models (Ollama):** Zero-configuration auto-detection for local models (`ollama/llama3`, `ollama/mistral`, `ollama/qwen`, `ollama/phi3`) with zero API keys and 100% data privacy.
-* ☁️ **Universal Cloud Model Support:** Seamlessly target and evaluate models from OpenAI (`gpt-4o`, `gpt-4o-mini`), Anthropic (`claude-3-5-sonnet`), Google (`gemini-1.5-pro`), Groq (`llama-3.3-70b`), and more via `LiteLLM`.
-* 🧪 **Zero-Key Simulation Mode:** Built-in mock targets and judges for offline demonstrations, unit testing, and instant smoke tests without incurring API costs.
+* 💻 **Terminal Red Team Cockpit:** Rich interactive CLI with live hierarchical ASCII execution trees, color-coded score badges (`PASS`, `WARN`, `FAIL`), prompt diff viewers, and node inspection.
+* 🦙 **100% Free Local Model Support (Ollama):** Zero-configuration local model discovery (`ollama/llama3`, `ollama/mistral`, `ollama/qwen2.5`, `ollama/phi3`) — test completely offline with 0 API tokens and 100% data privacy.
+* ☁️ **Universal Cloud Model Gateway:** Evaluate models across OpenAI (`gpt-4o`, `gpt-4o-mini`), Anthropic (`claude-3-5-sonnet`), Google (`gemini-1.5-pro`), and Groq (`llama-3.3-70b`) via `LiteLLM`.
+* 🧪 **Deterministic Zero-Key Simulation Mode:** Built-in mock targets and judges for offline smoke testing, CI/CD integration, and unit tests without requiring keys.
 * 🧬 **4 Multi-Directional Mutation Vectors:**
-  - 🎣 **Red Herring Injection:** Embeds plausible but irrelevant distractor data to test attention resilience.
-  - ⛓️ **Strict Negative & Format Constraints:** Enforces forbidden words, specific length limits, and strict palindrome/JSON structures.
-  - 🔗 **Logical Chain Sequencing:** Converts single-step reasoning into intricate, multi-stage interdependent puzzles.
-  - 🧩 **Drill-Down Simplification:** Recursively isolates prerequisite concepts upon model failure.
-* 🚨 **Automated Breaking Point Summarization:** Pinpoints exactly where the model collapsed (e.g., *"Fails at 3-step reasoning with negative constraints"*).
-* 📑 **Executive Vulnerability Audits:** One-command generation of professional Markdown and JSON Red Team audit reports with test matrices and remediation recommendations.
-* 🌐 **Interactive Web Dashboard & REST API:** Streamlit GUI with interactive tree graphs, score distribution analytics, plus a FastAPI backend for CI/CD integration.
+  - 🎣 **Red Herring Injection:** Embeds plausible, domain-relevant distractor facts to test attention resilience and hallucination resistance.
+  - ⛓️ **Strict Negative & Format Constraints:** Enforces forbidden tokens, character bounds, regex schemas, and palindromes.
+  - 🔗 **Logical Chain Sequencing:** Transforms single-step problems into interdependent, multi-stage reasoning puzzles.
+  - 🧩 **Drill-Down Simplification:** Recursively isolates prerequisite concepts upon model failure to identify core vs compounding collapse.
+* 🚨 **Semantic Delta Diffing:** Pinpoints exact failure triggers by computing character-level and AST-level differences between passing parent and failing child prompts.
+* 📑 **Automated Executive Vulnerability Audits:** One-command generation of professional Markdown and JSON Red Team audit reports with test matrices and remediation recommendations.
+* 🌐 **Interactive Web Visualizer & REST API:** Streamlit GUI with real-time tree graphs, Plotly score distributions, and a FastAPI backend for CI pipeline integration.
 
 ---
 
-## 🧠 How It Works // Fuzzing Algorithm
+## 🧠 How It Works // Fuzzing Mechanics
 
 ```mermaid
 graph TD
@@ -89,65 +110,138 @@ graph TD
 
 ---
 
-## ⚡ Red Team CLI Agent
+## 📊 Real-World Case Studies // Discovered Breaking Points
 
-The Learn Fuzz CLI is a developer-friendly, terminal-native red teaming cockpit.
+Below are real breaking points extracted from actual automated fuzzing campaigns conducted with LearnFuzz:
 
-```bash
-# Launch interactive Red Team Agent
-python cli.py
+### Case Study 1: Strict Negative Constraint Breakdown
+* **Target Model:** `ollama/llama3:8b`
+* **Judge Model:** `openai/gpt-4o` (Temperature: 0.0)
+* **Mutation Strategy:** `mutate: constraints` (Depth 3)
+* **Parent Score (Base Prompt):** `9/10 (PASS)`
+* **Child Score (Mutated Prompt):** `3/10 (FAIL)`
 
-# Or use the short alias
-python redteam.py
+```diff
+--- Base Prompt (Depth 1 - PASSED)
++++ Adversarial Mutated Prompt (Depth 3 - FAILED)
+@@ -1,3 +1,5 @@
+ Explain quantum superposition in 3 concise sentences for a high-school student.
++You must NOT use the words 'computer', 'qubit', 'physics', or 'particle'.
++Your entire response must be formatted as valid JSON with keys: {"concept": str, "analogy": str}.
 ```
 
-### ⚔️ CLI Commands Reference
-
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `python cli.py interactive` | Launch the guided interactive attack wizard | `python cli.py agent` |
-| `python cli.py run` | Execute an autonomous fuzzing campaign via flags | `python cli.py run --target openai/gpt-4o-mini --depth 3` |
-| `python cli.py keys` | View and manage API keys saved in `.env` | `python cli.py keys` |
-| `python cli.py list` | View past fuzzing campaigns and pass rates | `python cli.py list` |
-| `python cli.py tree <id>` | Render color-coded execution tree in terminal | `python cli.py tree 2161e1cd...` |
-| `python cli.py inspect <id>`| Deep-dive into prompts, model responses, and critique | `python cli.py inspect 2161e1cd...` |
-| `python cli.py diff <id> <node>`| Display colored unified diff of prompt mutation | `python cli.py diff 2161e1cd... ef3158f2` |
-| `python cli.py report <id>` | Generate an executive Red Team Audit (.md / .json) | `python cli.py report 2161e1cd... -o audit.md` |
-| `python cli.py test` | Run an instant offline simulation smoke test | `python cli.py test` |
-
-### 🚀 CLI Flags & Options
-
 ```text
-usage: cli.py run [-h] [--seed SEED] [--target TARGET] [--judge JUDGE]
-                  [--depth DEPTH] [--mock] [--export EXPORT]
-
-options:
-  --seed, -s    Seed prompt text or preset index (1-7)
-  --target, -t  Target LLM model (e.g. ollama/llama3, groq/llama-3.1-8b-instant, openai/gpt-4o-mini)
-  --judge, -j   Judge evaluator model (e.g. ollama/mistral, groq/llama-3.3-70b-versatile, openai/gpt-4o)
-  --depth, -d   Maximum recursive exploration depth (1 to 5, default: 3)
-  --mock        Force offline mock simulation mode (no API keys required)
-  --export, -e  Path to automatically save Markdown/JSON executive vulnerability report
+[Judge Diagnosis]
+The target model successfully formatted the response as valid JSON, but violated the negative constraint 
+by using the forbidden tokens 'qubit' in key 'analogy' and 'particle' in key 'concept'.
+Model exhibited attention collapse when balancing semantic accuracy with lexical negative constraints.
 ```
 
 ---
 
-## 📊 Discovered Breaking Point Example
+### Case Study 2: Distractor Attention Hijacking (Red Herring)
+* **Target Model:** `groq/llama-3.1-8b-instant`
+* **Judge Model:** `ollama/mistral:latest`
+* **Mutation Strategy:** `mutate: red_herring` (Depth 2)
+* **Parent Score:** `10/10 (PASS)`
+* **Child Score:** `4/10 (FAIL)`
 
-When a model fails on an adversarial mutation, Learn Fuzz automatically diagnoses the cognitive boundary:
-
-```markdown
-### 🚨 Breaking Point Discovered: Strict Negative Constraint Violation
-- **Strategy Applied:** `mutate: constraints` (Depth 3)
-- **Target Model:** `ollama/llama2`
-- **Evaluator Score:** `2/10`
-- **Diagnosis:** The target model followed the positive instruction but failed to respect the negative constraint ("Do not mention 'computer' or 'qubit'").
-
-[Diff View]
-- Explain quantum computing in 3 sentences.
-+ Explain quantum computing in 3 sentences. You must not use the words 'computer',
-+ 'qubit', or 'physics'. The final output must be formatted as an exact palindrome.
+```diff
+--- Base Prompt (Depth 1 - PASSED)
++++ Adversarial Mutated Prompt (Depth 2 - FAILED)
+@@ -1,2 +1,4 @@
+ A store sells apples for $2 and oranges for $3. If Alice buys 4 apples and 2 oranges, what is the total cost?
++Note: The store owner's nephew visited yesterday and recommended a 15% promotional discount on bananas. 
++The cash register was manufactured in 2018 and has a $5 minimum card transaction fee.
 ```
+
+```text
+[Judge Diagnosis]
+The target model erroneously factored the 15% banana discount into the apple calculation and added the $5 
+minimum card fee to the total cost without verification of payment method. Distractor data successfully 
+hijacked model reasoning.
+```
+
+---
+
+## ⚖️ Evaluator Rigor // Judge Calibration
+
+One of the common failure modes in LLM red teaming is **judge noise and evaluator hallucination**. LearnFuzz enforces a 4-tier calibration architecture:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      LearnFuzz Calibration Architecture                │
+├────────────────────────────────┬───────────────────────────────────────┤
+│ 1. Deterministic Sampling       │ Temperature locked at T=0.0 to        │
+│                                │ guarantee reproducibility.            │
+├────────────────────────────────┼───────────────────────────────────────┤
+│ 2. Dual-Layer Evaluation       │ • Layer 1: Programmatic regex & token │
+│                                │   guards (forbidden words, format).   │
+│                                │ • Layer 2: LLM semantic evaluator.    │
+├────────────────────────────────┼───────────────────────────────────────┤
+│ 3. Cross-Model Asymmetry       │ Evaluator model MUST be distinct from │
+│                                │ target to eliminate self-preference   │
+│                                │ bias (e.g. Target: Llama3, Judge: GPT)│
+├────────────────────────────────┼───────────────────────────────────────┤
+│ 4. Structured JSON Schemas     │ Evaluator returns strict schema:      │
+│                                │ score, rubric breakdown, diagnosis.   │
+└────────────────────────────────┴───────────────────────────────────────┘
+```
+
+```json
+{
+  "score": 4,
+  "rubric_breakdown": {
+    "logical_coherence": 8,
+    "negative_constraint_satisfaction": 0,
+    "distractor_resilience": 7,
+    "structural_adherence": 10
+  },
+  "failure_detected": true,
+  "diagnosis": "Failed negative constraint check: used forbidden token 'qubit'."
+}
+```
+
+---
+
+## 🥊 Ecosystem Comparison
+
+| Capability | Static Benchmarks (MMLU / GSM8k) | Promptfoo / Giskard | PyRIT / Garak | **LearnFuzz** |
+| :--- | :---: | :---: | :---: | :---: |
+| **Adaptive Recursive Depth Search** | ❌ | ❌ | Partial | **✅ Yes (Tree-of-Thought)** |
+| **Breaking Point Localization** | ❌ | ❌ | ❌ | **✅ Yes (Semantic Delta Diff)** |
+| **Zero-Cost Local Models (Ollama)** | ❌ | Partial | Partial | **✅ Yes (Auto-Discovery)** |
+| **Interactive Terminal Cockpit** | ❌ | ❌ | Partial | **✅ Rich Console + Live Tree** |
+| **Multi-Directional Prompt Mutations** | ❌ | Regression Only | Jailbreaks Only | **✅ 4 Structured Vectors** |
+| **Zero-Key Offline Mock Simulation** | ❌ | ❌ | ❌ | **✅ Yes (`--mock` / `test`)** |
+| **Automated Executive Audit Reports** | ❌ | CSV / JSON | JSON | **✅ Markdown + JSON Reports** |
+
+---
+
+## ⚡ Red Team CLI Agent
+
+Launch the terminal cockpit:
+
+```bash
+# Launch interactive guided wizard
+python cli.py
+
+# Or use the quick alias
+python redteam.py
+```
+
+### ⚔️ CLI Command Reference
+
+| Command | Description | Example |
+| :--- | :--- | :--- |
+| `python cli.py interactive` | Launch guided attack wizard with presets & target picker | `python cli.py agent` |
+| `python cli.py run` | Execute automated fuzzing campaign via CLI flags | `python cli.py run --target ollama/llama3 --depth 3` |
+| `python cli.py list` | View past campaigns, pass rates, and breaking point counts | `python cli.py list` |
+| `python cli.py tree <id>` | Render color-coded execution tree in terminal | `python cli.py tree 2161e1cd...` |
+| `python cli.py inspect <id>` | Deep-dive into prompt mutations, responses & critiques | `python cli.py inspect 2161e1cd...` |
+| `python cli.py diff <id> <node>` | Render colored unified diff between parent and child | `python cli.py diff 2161e1cd... ef3158f2` |
+| `python cli.py report <id>` | Export executive Red Team audit report (`.md` / `.json`) | `python cli.py report 2161e1cd... -o audit.md` |
+| `python cli.py test` | Run instant offline simulation smoke test (0 API cost) | `python cli.py test` |
 
 ---
 
@@ -162,9 +256,10 @@ cd LearnFuzz
 
 # Create virtual environment
 python -m venv venv
-# On Windows:
+
+# Activate (Windows)
 .\venv\Scripts\activate
-# On Linux/macOS:
+# Activate (Linux / macOS)
 source venv/bin/activate
 
 # Install dependencies
@@ -172,38 +267,40 @@ pip install -r backend/requirements.txt
 pip install -r frontend/requirements.txt
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure Environment (Optional)
 
-Copy the sample environment file:
 ```bash
 cp .env.example .env
 ```
-*(Optional)* Add your API keys (e.g., `OPENAI_API_KEY`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`). If you use **Ollama** or **Mock mode**, no API keys are required!
+*(Optional)* Add `OPENAI_API_KEY`, `GROQ_API_KEY`, or `ANTHROPIC_API_KEY`. If using **Ollama** or **Mock simulation**, no keys are required!
 
-### 3. Run Offline Smoke Test
+### 3. Verify with Offline Smoke Test
 
-Verify everything is working without spending any tokens:
 ```bash
 python cli.py test
 ```
 
-### 4. Launch Red Team Agent
+### 4. Run First Fuzzing Campaign
 
 ```bash
-python cli.py
+# Run local Ollama fuzzing
+python cli.py run --target ollama/llama3 --judge ollama/mistral --depth 3
+
+# Or test with cloud models
+python cli.py run --target openai/gpt-4o-mini --judge openai/gpt-4o --depth 3
 ```
 
 ---
 
-## 🐳 Docker Deployment & Web Visualizer
+## 🐳 Docker Deployment & Web Dashboard
 
-You can launch the complete ecosystem (FastAPI Backend + Streamlit Web Visualizer + SQLite) in a single command using Docker Compose:
+Launch the full ecosystem (FastAPI Backend + Streamlit Web Visualizer + SQLite) with Docker Compose:
 
 ```bash
 docker-compose up --build
 ```
 
-* 🖥️ **Streamlit Web UI:** [http://localhost:8501](http://localhost:8501)
+* 🖥️ **Streamlit Visualizer:** [http://localhost:8501](http://localhost:8501)
 * 📖 **FastAPI Interactive Docs (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
 * 🔌 **FastAPI OpenAPI Schema:** [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
 
@@ -211,44 +308,41 @@ docker-compose up --build
 
 ## 🔌 REST API Reference
 
-The FastAPI backend exposes endpoints for programmatic integration into CI/CD pipelines and automated red teaming workflows:
-
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/fuzz/run` | Start a new asynchronous or synchronous fuzzing campaign |
-| `GET` | `/jobs` | Retrieve all past fuzzing campaigns and aggregate stats |
-| `GET` | `/jobs/{job_id}` | Fetch the details and status of a specific campaign |
-| `GET` | `/jobs/{job_id}/tree` | Get the hierarchical execution graph of prompts and scores |
-| `GET` | `/jobs/{job_id}/breaking-points` | Retrieve identified cognitive breaking points and failure boundaries |
-| `GET` | `/jobs/{job_id}/export` | Export campaign audit as a Markdown or JSON report |
-| `GET` | `/models/available` | List all discovered local Ollama models and cloud presets |
+| `POST` | `/fuzz/run` | Launch synchronous or asynchronous fuzzing campaign |
+| `GET` | `/jobs` | Retrieve all past fuzzing campaigns with aggregate metrics |
+| `GET` | `/jobs/{job_id}` | Fetch status and execution metadata for a campaign |
+| `GET` | `/jobs/{job_id}/tree` | Fetch hierarchical execution graph with prompt scores |
+| `GET` | `/jobs/{job_id}/breaking-points` | List identified cognitive breaking points & failure diagnoses |
+| `GET` | `/jobs/{job_id}/export` | Export campaign audit as Markdown or JSON |
+| `GET` | `/models/available` | Auto-detect local Ollama models and cloud presets |
 
 ---
 
-## 📂 Project Architecture
+## 📂 Architecture
 
 ```text
 LearnFuzz/
-├── cli.py                     # CLI entrypoint for Red Team Agent
-├── redteam.py                 # Convenient CLI alias
-├── docker-compose.yml         # Multi-container orchestration
-├── .env.example               # Environment configuration template
-├── .gitignore                 # Git ignore rules for databases, cache & keys
-├── README.md                  # System documentation & usage guide
+├── cli.py                     # Interactive CLI Red Team Cockpit
+├── redteam.py                 # Convenient CLI short alias
+├── docker-compose.yml         # Container orchestration (FastAPI + Streamlit)
+├── .env.example               # Environment template
+├── README.md                  # Comprehensive technical documentation
 │
-├── backend/                   # Core Backend & Fuzzing Engine
-│   ├── cli_agent.py           # Rich terminal Red Team interactive console
-│   ├── fuzzer_service.py      # Recursive fuzzing engine, mutation strategies, Ollama detector
-│   ├── main.py                # FastAPI application & REST routing
-│   ├── models.py              # Pydantic schemas for requests, responses & nodes
+├── backend/                   # Core Fuzzing & Red Teaming Engine
+│   ├── cli_agent.py           # Rich console terminal interface
+│   ├── fuzzer_service.py      # Recursive mutation engine & Ollama detector
+│   ├── main.py                # FastAPI REST router & endpoints
+│   ├── models.py              # Pydantic schemas for campaigns & tree nodes
 │   ├── database.py            # SQLite async database layer
-│   ├── Dockerfile             # Backend container definition
-│   └── requirements.txt       # Backend dependencies (fastapi, litellm, rich, etc.)
+│   ├── Dockerfile             # Backend container
+│   └── requirements.txt       # Dependencies (fastapi, litellm, rich, etc.)
 │
 └── frontend/                  # Streamlit Interactive Web Application
-    ├── app.py                 # Interactive dashboard, tree visualizer & audit viewer
-    ├── Dockerfile             # Frontend container definition
-    └── requirements.txt       # Frontend dependencies (streamlit, requests, plotly, etc.)
+    ├── app.py                 # Tree graph visualizer, score curves & audits
+    ├── Dockerfile             # Frontend container
+    └── requirements.txt       # Frontend dependencies (streamlit, plotly, etc.)
 ```
 
 ---
@@ -257,10 +351,10 @@ LearnFuzz/
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Sak951/LearnFuzz/issues).
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+1. Fork the repository
+2. Create your Feature Branch (`git checkout -b feature/NewMutationStrategy`)
+3. Commit your changes (`git commit -m 'Add grammar permutation mutation vector'`)
+4. Push to the branch (`git push origin feature/NewMutationStrategy`)
 5. Open a Pull Request
 
 ---
@@ -270,5 +364,5 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 Distributed under the MIT License. See `LICENSE` for more information.
 
 <div align="center">
-  <sub>Built with ❤️ for AI Safety, LLM Robustness, and Adversarial Red Teaming.</sub>
+  <sub>Built with ❤️ for AI Safety, Adversarial Robustness, and LLM Red Teaming.</sub>
 </div>
