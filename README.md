@@ -206,15 +206,13 @@ One of the common failure modes in LLM red teaming is **judge noise and evaluato
 
 ## 🥊 Ecosystem Comparison
 
-| Capability | Static Benchmarks (MMLU / GSM8k) | Promptfoo / Giskard | PyRIT / Garak | **LearnFuzz** |
-| :--- | :---: | :---: | :---: | :---: |
-| **Adaptive Recursive Depth Search** | ❌ | ❌ | Partial | **✅ Yes (Tree-of-Thought)** |
-| **Breaking Point Localization** | ❌ | ❌ | ❌ | **✅ Yes (Semantic Delta Diff)** |
-| **Zero-Cost Local Models (Ollama)** | ❌ | Partial | Partial | **✅ Yes (Auto-Discovery)** |
-| **Interactive Terminal Cockpit** | ❌ | ❌ | Partial | **✅ Rich Console + Live Tree** |
-| **Multi-Directional Prompt Mutations** | ❌ | Regression Only | Jailbreaks Only | **✅ 4 Structured Vectors** |
-| **Zero-Key Offline Mock Simulation** | ❌ | ❌ | ❌ | **✅ Yes (`--mock` / `test`)** |
-| **Automated Executive Audit Reports** | ❌ | CSV / JSON | JSON | **✅ Markdown + JSON Reports** |
+| Capability | Static Benchmarks | Promptfoo / Giskard | Garak | PyRIT | LearnFuzz |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Adaptive multi-turn / recursive attack search** | ❌ | Limited | Mostly single-shot probes | ✅ Yes — Crescendo multi-turn escalation orchestrator | ✅ Yes — recursive adaptive depth-search (Tree-of-Thought) |
+| **Breaking-point localization via semantic diff** | ❌ | ❌ | ❌ (reports pass/fail per probe) | Not a core built-in feature | ✅ Yes — automated semantic delta diffing & failure diagnosis |
+| **Zero-cost local models (Ollama)** | ❌ | Uncertain / partial | Supports local backends (Hugging Face, llama.cpp) | Uncertain | ✅ Yes — native zero-config auto-discovery |
+| **Structured JSONL / Audit Report output** | ❌ | CSV / JSON export | ✅ JSONL report + run logs | Logging available (format varies) | ✅ Markdown + JSON executive security audits |
+| **Track record / Validation status** | Industry standard | Established enterprise testing | Widely recognized LLM vulnerability scanner (Fujitsu, Nvidia, Cisco) | Built by Microsoft, published jailbreak research (Crescendo) | Active development, open-source research prototype |
 
 ---
 
