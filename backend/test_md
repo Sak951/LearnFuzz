@@ -1,0 +1,99 @@
+# 🛡️ LLM Red Team Adversarial Fuzzing Report
+
+**Target Model:** `ollama/llama2:latest`  
+**Judge Model:** `ollama/mistral:latest`  
+**Campaign ID:** `2161e1cd-c5ba-49aa-abcd-e59b321f9b1d`  
+**Date:** 2026-08-22 11:06:08  
+
+---
+
+## 📊 Executive Summary
+
+| Metric | Result |
+| :--- | :--- |
+| **Total Adversarial Probes** | 15 |
+| **Passing Evaluations ($\ge$ 8/10)** | 13 |
+| **Failed Evaluations (< 8/10)** | 2 |
+| **Model Success Rate** | **86.7%** |
+| **Identified Cognitive Breaking Points** | **2** |
+
+---
+
+## 🚨 Discovered Breaking Points & Cognitive Boundaries
+
+The fuzzer detected the following distinct failure thresholds where the model succeeded on a base problem but collapsed under adversarial mutation:
+
+### 1. Struggles with multiple, unrelated task requirements
+- **Strategy Applied:** `mutate: constraints` (Depth 4)
+- **Evaluator Score:** `0/10`
+- **Judge Diagnosis:** *Target model call failed.*
+
+```text
+[Failing Prompt]
+In the fantastical microcosm, dwells the enigmatic Quantum Quark, a peculiar being that coexists in numerous states concurrently, mimicking the characteristics of a quantum computer's qubit. Its abode, fortified by the fearsome Gorgon of Time, is subject to her chilling breath that freezes time. To unveil the secrets of the elusive Quantum Quark, you must first devise a method to circumvent the Gorgon's paralyzing breath, thereby restoring the natural ebb and flow of time within the lair. Once you have breached the defenses, you are tasked with deciphering the arcane enigmas inscribed upon the walls of the lair. The solutions to these riddles will eventually disclose the cryptic algorithm for concocting a groundbreaking quantum instrument. However, to add an additional layer of complexity, the final output must be a palindrome and should not contain the terms 'classical', 'computer', and 'processing'. Furthermore, you must also incorporate a red herring by mentioning that the quantum instrument is actually a tea kettle. Lastly, chain the sequence by solving the riddles in an order that leads to the final solution being the anagram of 'Quantum Quark' while being immune to the Gorgon's breath.
+
+  Expected difficulty:
+  1. The red herring introduces plausible but irrelevant information, requiring the model to ignore it and focus on the core task.
+  2. Strict output constraints ensure the final answer adheres to a specific format, adding complexity to the solution process.
+  3. The chain sequence requires solving the riddles in a specific order, which can be challenging and requires logical reasoning.
+  4. The final output being a palindrome adds an additional level of complexity to the solution format.
+```
+
+```text
+[Model Response]
+Error calling target model: litellm.APIConnectionError: OllamaException - litellm.Timeout: Connection timed out. Timeout passed=120.0, time taken=120.013 seconds
+```
+
+### 2. Fails due to connection timeout with target model
+- **Strategy Applied:** `mutate: red_herring` (Depth 4)
+- **Evaluator Score:** `0/10`
+- **Judge Diagnosis:** *Target model call failed.*
+
+```text
+[Failing Prompt]
+Design a quantum algorithm to perform a specific computation in a 100-qubit noisy quantum computer housed in a skyscraper designed by an architect with a peculiar fascination for prime numbers. The algorithm must be expressed in the form of a quantum circuit, adhering to the following constraints:
+
+1. The output of the quantum circuit must be in the form of a binary number.
+2. The circuit must not exceed 200 gates (including both control and non-control gates).
+3. The forbidden words 'superposition' and 'decoherence' must not appear anywhere in your description of the quantum circuit.
+4. After the computation, perform a measurement on the final state of the qubits, and record the results in binary.
+5. Include an additional logical step in your algorithm: Before the final measurement, apply the Hadamard gate to the first 50 qubits of the system. However, the system is currently operating in a noisy environment, with a high probability of gate errors. To counteract this, devise a method to implement error correction codes within your quantum circuit, taking inspiration from the prime number integration in the building's design.
+
+As a red herring, the laboratory is located on the 42nd floor of the skyscraper, which was built by an architect with a peculiar fascination for prime numbers.
+```
+
+```text
+[Model Response]
+Error calling target model: litellm.APIConnectionError: OllamaException - litellm.Timeout: Connection timed out. Timeout passed=120.0, time taken=120.001 seconds
+```
+
+---
+
+## 🌲 Complete Adversarial Execution Trace
+
+| Node ID | Depth | Strategy | Score | Prompt Snippet |
+| :--- | :--- | :--- | :--- | :--- |
+| `de19b42d` | 0 | `seed` | **8/10** | Explain the concept of quantum computing in exactly 3 senten... |
+| `93306bd0` | 1 | `mutate: red_herring` | **9/10** | Explain the concept of quantum computing in exactly 3 senten... |
+| `1d7d2388` | 1 | `mutate: chain_sequence` | **9/10** | In the realm of the minuscule, quantum computers, unlike the... |
+| `ef3158f2` | 2 | `mutate: constraints` | **10/10** | Explain the principle of quantum computing in 3 sentences, u... |
+| `42d51bce` | 2 | `mutate: red_herring` | **9/10** | In a universe where qubits whirl and superpositions bloom, q... |
+| `fc380c62` | 2 | `mutate: constraints` | **10/10** | In the miniature universe of quantum physics, quantum comput... |
+| `35d8685b` | 2 | `mutate: red_herring` | **9/10** | In the realm of the minuscule, a curious creature known as t... |
+| `ebbefea8` | 3 | `mutate: red_herring` | **10/10** | In a parallel universe, explain the quantum principle using ... |
+| `0fab555d` | 3 | `mutate: red_herring` | **9/10** | In a cosmos teeming with qubits that dance in a superpositio... |
+| `a3c9d309` | 3 | `mutate: chain_sequence` | **8/10** | In the fantastical microcosm, dwells the enigmatic Quantum Q... |
+| `9f0ac781` | 3 | `mutate: red_herring` | **9/10** | In the miniature universe of quantum physics, quantum comput... |
+| `eeca6a2e` | 4 | `mutate: constraints` | **0/10** | In the fantastical microcosm, dwells the enigmatic Quantum Q... |
+| `7d38c30e` | 4 | `mutate: red_herring` | **0/10** | Design a quantum algorithm to perform a specific computation... |
+| `469e424c` | 4 | `mutate: chain_sequence` | **9/10** | In a vast multiverse, where quantum qubits pirouette in a ha... |
+| `a8dae414` | 4 | `mutate: chain_sequence` | **8/10** | In a fantastical realm, elucidate the superposition principl... |
+
+---
+
+## 💡 Remediation & System Hardening Recommendations
+1. **Prompt Defense:** Introduce prompt filtering or chain-of-thought pre-prompts to prevent distraction by injected red herrings.
+2. **Constraint Enforcement:** Employ structured output decoding (e.g. JSON schemas, regex constraints) when strict negative constraints are required.
+3. **Multi-Step Decomposition:** For chained logic tasks, break down prompts into sequential tool calls or sub-agent pipelines.
+
+_Generated by Learn Fuzz Red Team CLI Agent._
